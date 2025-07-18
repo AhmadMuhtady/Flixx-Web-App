@@ -2,6 +2,12 @@ const globalState = {
 	currentPage: window.location.pathname,
 };
 
+// popular movies
+async function displayPopularMovies() {
+	const { results } = await fetchData('movie/popular');
+	console.log(results);
+}
+
 // Fetch data from TMDB API
 
 async function fetchData(endpoint) {
@@ -17,6 +23,7 @@ async function fetchData(endpoint) {
 }
 
 // high light active link
+
 function highLightActiveLink() {
 	const links = document.querySelectorAll('.nav-link');
 	links.forEach((link) => {
@@ -27,11 +34,12 @@ function highLightActiveLink() {
 }
 
 // init app
+
 function init() {
 	switch (globalState.currentPage) {
 		case '/':
 		case '/index.html':
-			console.log('Home');
+			displayPopularMovies();
 			break;
 		case '/shows.html':
 			console.log('Shows');
