@@ -275,6 +275,57 @@ function displayBackGroundImage(type, backgroundPath) {
 		document.querySelector('#show-details').appendChild(overlayDiv);
 	}
 }
+
+// display slider movies
+
+async function displaySlider() {
+	const { results } = await fetchData('movie/now_playing');
+
+	results.forEach((movie) => {
+		const div = document.createElement('div');
+		div.classList.add('swiper-slide');
+		div.innerHTML = `
+			<a href="movie-details.html?id=${movie.id}">
+				<img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" alt="${
+			movie.title
+		}" />
+			</a>
+			<h4 class="swiper-rating">
+				<i class="fas fa-star text-secondary"></i> ${movie.vote_average.toFixed(1)} / 10
+			</h4>
+		`;
+
+		document.querySelector('.swiper-wrapper').appendChild(div);
+	});
+
+	initSwiper(); // ✅ Only call once after all slides are added
+}
+
+function initSwiper() {
+	const swiper = new Swiper('.swiper', {
+		slidesPerView: 1, // ✅ fixed typo
+		spaceBetween: 30,
+		freeMode: true,
+		loop: true,
+		autoplay: {
+			// ✅ fixed typo (autoPlay → autoplay)
+			delay: 4000,
+			disableOnInteraction: false,
+		},
+		breakpoints: {
+			500: {
+				slidesPerView: 2,
+			},
+			700: {
+				slidesPerView: 3,
+			},
+			1200: {
+				slidesPerView: 4, // or change as needed
+			},
+		},
+	});
+}
+
 // init app
 
 function init() {
@@ -282,6 +333,7 @@ function init() {
 		case '/':
 		case '/index.html':
 			displayPopularMovies();
+			displaySlider();
 			break;
 		case '/shows.html':
 			displayPopularShows();
