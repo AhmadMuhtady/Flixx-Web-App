@@ -1,5 +1,15 @@
 const globalState = {
 	currentPage: window.location.pathname,
+	search: {
+		term: '',
+		type: '',
+		page: 1,
+		totalPages: 1,
+	},
+	api: {
+		apiKey: '35aed5321566551dccd40f8656471bde',
+		apiUrl: 'http://api.themoviedb.org/3/',
+	},
 };
 
 // popular movies
@@ -215,13 +225,32 @@ ${show.genres.map((genre) => `<li>${genre.name}</li>`).join('')}
 async function fetchData(endpoint) {
 	//register your personal key at https:www.themoviedb.org/setting/api and enter here
 	// only use for study development and small projects you should store your  personal key and make request on the server
-	const API_KEY = '35aed5321566551dccd40f8656471bde';
-	const API_URL = 'http://api.themoviedb.org/3/';
+	const API_KEY = globalState.api.apiKey;
+	const API_URL = globalState.api.apiUrl;
 
 	showSpinner();
 
 	const res = await fetch(
 		`${API_URL}${endpoint}?api_key=${API_KEY}&language=en-US`
+	);
+	const data = await res.json();
+
+	hideSpinner();
+
+	return data;
+}
+
+// make request to search
+async function searchAPIData() {
+	//register your personal key at https:www.themoviedb.org/setting/api and enter here
+	// only use for study development and small projects you should store your  personal key and make request on the server
+	const API_KEY = globalState.api.apiKey;
+	const API_URL = globalState.api.apiUrl;
+
+	showSpinner();
+
+	const res = await fetch(
+		`${API_URL}search/${globalState.search.type}?api_key=${API_KEY}&language=en-US&query=${globalState.search.term}`
 	);
 	const data = await res.json();
 
@@ -249,7 +278,7 @@ function highLightActiveLink() {
 	});
 }
 
-//
+//add Commas To Number
 function addCommasToNumber(number) {
 	return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
@@ -276,6 +305,80 @@ function displayBackGroundImage(type, backgroundPath) {
 	}
 }
 
+// search movie / tv shows
+
+async function search(results) {
+	const queryString = window.location.search;
+	const urlParams = new URLSearchParams(queryString);
+	globalState.search.type = urlParams.get('type');
+	globalState.search.term = urlParams.get('search-term');
+
+	if (globalState.search.term !== '' && globalState.search.term !== null) {
+		// todo make request and display results
+		const { results, total_pages, page } = await searchAPIData();
+		if (results.length === 0) {
+			showAlert('No results found');
+			return;
+		}
+
+		displaySearchResult(results);
+		document.querySelector('#search-term').value = '';
+	} else {
+		showAlert('Please enter a search term');
+	}
+}
+
+// display results in search
+function displaySearchResult(results) {
+	results.forEach((result) => {
+		const div = document.createElement('div');
+		div.classList.add('card');
+		div.innerHTML = `
+          <a href="${globalState.search.type}-details.html?id=${result.id}">
+            ${
+							result.poster_path
+								? `<img
+              src="https://image.tmdb.org/t/p/w500/${result.poster_path}"
+              class="card-img-top"
+              alt="${
+								globalState.search.type === 'movie' ? result.title : result.name
+							}"
+            />`
+								: `								<img
+									src="images/no-image.jpg"
+									class="card-img-top"
+									alt=""${globalState.search.type === 'movie' ? result.title : result.name}"
+								/>`
+						}
+          </a>
+          <div class="card-body">
+            <h5 class="card-title">"${
+							globalState.search.type === 'movie' ? result.title : result.name
+						}"</h5>
+            <p class="card-text">
+              <small class="text-muted">Release: "${
+								globalState.search.type === 'movie'
+									? result.release_date
+									: result.first_air_date
+							}" </small>
+            </p>
+          </div>`;
+
+		document.querySelector('#search-results').appendChild(div);
+	});
+}
+// show alert design
+
+function showAlert(message, className = 'error') {
+	const alertEl = document.createElement('div');
+	alertEl.classList.add('alert', className);
+	alertEl.appendChild(document.createTextNode(message));
+	document.querySelector('#alert').appendChild(alertEl);
+
+	setTimeout(() => {
+		alertEl.remove();
+	}, 2000);
+}
 // display slider movies
 
 async function displaySlider() {
@@ -345,7 +448,7 @@ function init() {
 			displayShowDetails();
 			break;
 		case '/search.html':
-			console.log('Search');
+			search();
 	}
 	highLightActiveLink();
 }
